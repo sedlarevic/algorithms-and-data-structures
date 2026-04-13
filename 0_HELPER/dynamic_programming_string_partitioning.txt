@@ -1,0 +1,10 @@
+Word break je jako tezak vrati se na njega.
+
+https://leetcode.com/problems/word-break/
+https://leetcode.com/problems/coin-change/description/
+https://leetcode.com/problems/jump-game/description/
+https://leetcode.com/problems/climbing-stairs/description/
+https://leetcode.com/problems/decode-ways/description/
+https://leetcode.com/problems/unique-paths/description/
+https://leetcode.com/problems/longest-increasing-subsequence/description/
+https://leetcode.com/problems/maximum-subarray/description/

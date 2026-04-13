@@ -1,0 +1,74 @@
+https://leetcode.com/problems/permutations/description/
+https://leetcode.com/problems/combination-sum/
+https://leetcode.com/problems/subsets/
+https://leetcode.com/problems/combinations/
+https://leetcode.com/problems/letter-combinations-of-a-phone-number/
+https://leetcode.com/problems/generate-parentheses/description/
+https://leetcode.com/problems/word-search/
+https://leetcode.com/problems/path-sum-ii/description/
+
+Ovo su zadaci npr imas 6 novcica i treba da dobijes sve kombinacije zbirova do target-a.
+Ili npr sve kombinacije neke liste, unikatne.
+U sustini, prolazenje kroz kombinacije, uz backtracking, gde znamo da postoji 1 ishod. Pathfinding npr ili sudoku solver, itd.
+
+###
+Svaki backtracking algoritam ima 4 dela:
+1. Base Case
+2. Choices
+3. Constraints
+4. Backtracking Step
+###
+
+Ovo je template za resavanje zadatka ovog tipa.
+
+def backtrack(params):
+  if base_case_condition:
+    results.append(copy_of_solution)
+    return
+  for choice in choices:
+    if violates_contraint:
+      continue
+
+    make_choice()
+    backtrack(updated_params)
+    undo_choice() # backtracking step
+
+################################################################################
+PRIMER RESAVANJA ZADATKA:
+
+46. Permutations
+https://leetcode.com/problems/permutations/
+
+1. Base Case -> All numbers in nums
+2. Choices -> Can't reuse the same number more than once in our path
+3. Constraints -> When the path length == len(nums)
+4. Backtracking Step -> Pop the last number added 
+
+
+class Solution(object):
+    def permute(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[List[int]]
+        """
+        res = []
+        
+        def backtrack(path):
+            # Base case -> All numbers in nums
+            # Constraints -> When the path length is the same as length of nums
+            if len(path) == len(nums):
+                res.append(path[:])
+                return
+            
+            for num in nums:
+                # Choices -> Can't use the same number more than once in our path
+                if num in path:
+                    continue
+                path.append(num)
+                backtrack(path)
+                # Backtracking Step -> Pop the last number added
+                path.pop()
+            
+        
+        backtrack([])
+        return res
