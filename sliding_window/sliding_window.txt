@@ -1,0 +1,40 @@
+What is this algorithm good for?
+  - things we iterate over sequentially.
+    - contiguous sequence of elements
+    - strings, arrays, linked lists
+
+Criteria we are looking for:
+  - min/max, longest/shortest, if contained in string/arrays/linked lists, etc. 
+
+Question variants:
+  - fixed length
+      e.g. max sum subarray of size k
+  - dynamic variant
+      e.g. smallest sum that is >= of some value
+  - dynamic variant of auxiliary data structure (hashmap, additional array, hash set..)
+      e.g. longest substring with no more than k distinct characters
+      e.g. string permutations
+
+Similarities between variants:
+  - everything grouped in a sequence
+  - longest/smallest/contains/min/max
+
+###
+
+Example (fixed length): Find the max subarray sum in this array, with the subarray size of k=3
+arr = [1, 3, 5, 7, 0]
+
+          iter 0
+subarr          cur   max  
+[]              0     -inf 
+          iter 1
+subarr          cur   max  
+[1, 3, 5]       9     9 
+          iter 2 # CALCULATING THE NEXT SUBARRAY BY TAKING cur sum - first element + next element
+subarr          cur   max  
+[3, 5, 7]       17    17 
+          iter 3
+subarr          cur   max  
+[5, 7, 0]       12    17 
+
+
