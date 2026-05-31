@@ -37,4 +37,3 @@ subarr          cur   max
 subarr          cur   max  
 [5, 7, 0]       12    17 
 
-
