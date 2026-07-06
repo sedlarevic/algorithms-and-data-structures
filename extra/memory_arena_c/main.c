@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,7 +20,7 @@ typedef int32 bool32;
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define ALIGN_UP_POW2(n, p) (((uint64)(n) + ((uint64)(p)-1)) & ~((uint64)(p)-1))
+
 /*
  * n = 20
  * p = 8
@@ -28,7 +29,7 @@ typedef int32 bool32;
  * 00011011 & ~(00000111)
  * 00011011 & 11111000 = 00011000 = 24
  */
-
+#define ALIGN_UP_POW2(n, p) (((uint64)(n) + ((uint64)(p)-1)) & ~((uint64)(p)-1))
 #define ARENA_BASE_POS (sizeof(mem_arena))
 #define ARENA_ALIGN (sizeof(void *))
 
@@ -39,11 +40,26 @@ typedef int32 bool32;
 #define ARENA_PUSH_ARRAY_NZ(arena, T, n)                                       \
   (T *)ArenaPush((arena), sizeof(T) * (n), true)
 
+/*
+ * To reserve: The OS reserves range of virtual addresses inside this process,
+ * so future allocations in this process will not use that address range.
+ * To commit: The OS makes pages in that reserved range readeable/writeable.
+ */
+
 typedef struct {
+  // How much total virtual address space arena is allowed to use
   uint64 ReserveSize;
+
+  // In which chunks is memory phisically activated
   uint64 CommitSize;
+
+  // Where is currently the end of used memory
   uint64 Position;
+
+  // Until which position is the memory actually commited (usable for
+  // read/write)
   uint64 CommitPosition;
+
 } mem_arena;
 
 mem_arena *ArenaCreate(uint64 ReserveSize, uint64 CommitSize);
@@ -59,11 +75,35 @@ bool32 PlatformMemoryCommit(void *MemoryPointer, uint64 Size);
 bool32 PlatformMemoryDecommit(void *MemoryPointer, uint64 Size);
 bool32 PlatformMemoryRelease(void *MemoryPointer, uint64 Size);
 
+void ArenaDebugPrint(mem_arena *Arena, const char *Label);
+
 int main(void) {
 
-  mem_arena *PermanentArena = ArenaCreate(MiB(1), MiB(1));
+  mem_arena *A = ArenaCreate(KiB(64), KiB(4));
+  if (!A) {
+    return 1;
+  }
+  ArenaDebugPrint(A, "After create");
 
-  ArenaDestroy(PermanentArena);
+  ArenaPush(A, KiB(1), false);
+  ArenaDebugPrint(A, "After push 1 KiB");
+
+  ArenaPush(A, KiB(2), false);
+  ArenaDebugPrint(A, "After push 2 KiB");
+
+  ArenaPush(A, KiB(2), false);
+  ArenaDebugPrint(A, "After push 2 KiB again");
+
+  ArenaPush(A, KiB(10), false);
+  ArenaDebugPrint(A, "After push 10 KiB");
+
+  ArenaPush(A, KiB(25), false);
+  ArenaDebugPrint(A, "After push 25 KiB");
+
+  ArenaClear(A);
+  ArenaDebugPrint(A, "After clear");
+
+  ArenaDestroy(A);
   return 0;
 }
 
@@ -106,6 +146,29 @@ void *ArenaPush(mem_arena *Arena, uint64 Size, bool32 NonZero) {
   }
   if (NewPosition > Arena->CommitPosition) {
     uint64 NewCommitPosition = NewPosition;
+    /*
+        Commit memory in CommitSize chunks.
+        NewPosition = first byte past the requested allocation.
+        Round NewPosition up to the next CommitSize boundary:
+
+            CommitSize = 10
+
+            23 -> 23 + 9 = 32
+                 32 % 10 = 2
+                 32 - 2 = 30
+            20 -> 20 + 9 = 29
+                 29 % 10 = 9
+                 29 - 9 = 20
+
+        Then commit only the missing range:
+
+            |========|+++++++|-------|
+                     ^
+              old CommitPosition
+
+            '=' already committed
+            '+' newly committed
+    */
     NewCommitPosition += Arena->CommitSize - 1;
     NewCommitPosition -= NewCommitPosition % Arena->CommitSize;
     NewCommitPosition = MIN(NewCommitPosition, Arena->ReserveSize);
@@ -129,6 +192,7 @@ void *ArenaPush(mem_arena *Arena, uint64 Size, bool32 NonZero) {
 }
 
 void ArenaPop(mem_arena *Arena, uint64 Size) {
+  // NOTE: Committed memory stays committed after pop.
   Size = MIN(Size, Arena->Position - ARENA_BASE_POS);
   Arena->Position -= Size;
 }
@@ -140,6 +204,28 @@ void ArenaPopTo(mem_arena *Arena, uint64 Position) {
 
 void ArenaClear(mem_arena *Arena) { ArenaPopTo(Arena, ARENA_BASE_POS); }
 
+void ArenaDebugPrint(mem_arena *Arena, const char *Label) {
+
+  printf("\n%s\n", Label);
+  printf("Position:          %llu\n", Arena->Position);
+  printf("CommitPosition:    %llu\n", Arena->CommitPosition);
+  printf("ReserveSize:       %llu\n", Arena->ReserveSize);
+
+  int Width = 64;
+
+  for (int i = 0; i < Width; ++i) {
+
+    uint64 At = (Arena->ReserveSize * i) / Width;
+    if (At < Arena->Position) {
+      putchar('#'); // used
+    } else if (At < Arena->CommitPosition) {
+      putchar('='); // commited but unused
+    } else {
+      putchar('-'); // reserved but uncommited
+    }
+  }
+  putchar('\n');
+}
 #ifdef _WIN32
 #include <windows.h>
 uint32 PlatformGetPageSize(void) {

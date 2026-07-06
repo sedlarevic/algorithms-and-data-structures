@@ -1,0 +1,42 @@
+
+After create
+Position:          32
+CommitPosition:    16384
+ReserveSize:       65536
+#===============------------------------------------------------
+
+After push 1 KiB
+Position:          1056
+CommitPosition:    16384
+ReserveSize:       65536
+##==============------------------------------------------------
+
+After push 2 KiB
+Position:          3104
+CommitPosition:    16384
+ReserveSize:       65536
+####============------------------------------------------------
+
+After push 2 KiB again
+Position:          5152
+CommitPosition:    16384
+ReserveSize:       65536
+######==========------------------------------------------------
+
+After push 10 KiB
+Position:          15392
+CommitPosition:    16384
+ReserveSize:       65536
+################------------------------------------------------
+
+After push 25 KiB
+Position:          40992
+CommitPosition:    49152
+ReserveSize:       65536
+#########################################=======----------------
+
+After clear
+Position:          32
+CommitPosition:    49152
+ReserveSize:       65536
+#===============================================----------------
