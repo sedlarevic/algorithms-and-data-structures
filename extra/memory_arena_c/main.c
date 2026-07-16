@@ -271,12 +271,15 @@ bool32 PlatformMemoryCommit(void *MemoryPointer, uint64 Size) {
                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   return Result != MAP_FAILED;
 }
+
 bool32 PlatformMemoryDecommit(void *MemoryPointer, uint64 Size) {
   void *Result = mmap(MemoryPointer, Size, PROT_NONE,
                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   return Result != MAP_FAILED;
 }
+
 bool32 PlatformMemoryRelease(void *MemoryPointer, uint64 Size) {
   return munmap(MemoryPointer, Size) == 0;
 }
+
 #endif
